@@ -1,1 +1,0 @@
-TODO : préparer le prochain meetup sur la gestion de la camera avec Qt/Qml

@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Overlay.qml</file>
+        <file>cam_photo.png</file>
+        <file>camera_flash_auto.png</file>
+        <file>camera_flash_off.png</file>
+        <file>ProgressBar.qml</file>
+    </qresource>
+</RCC>
