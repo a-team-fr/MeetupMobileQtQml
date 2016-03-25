@@ -1,6 +1,7 @@
 import QtQuick 2.3
 import QtQuick.Window 2.2
 import QtMultimedia 5.5
+import QtQuick.Controls 1.4
 import Qt.labs.settings 1.0
 
 Window {
@@ -30,20 +31,20 @@ Window {
 
     Connections{
         target: controler
-        onDecodingStarted: console.debug("start qrdecode")
+        //onDecodingStarted: console.debug("start qrdecode")
         onTagFound: {
-            console.debug("done qrdecode : good")
+            //console.debug("done qrdecode : good")
             qrCodeFound.text = idScanned;
             qrCodeFound.color = "green";
         }
 
         onErrorMessage:{
-            console.debug("done qrdecode : error")
+            //console.debug("done qrdecode : error")
             qrCodeFound.text = message;
             qrCodeFound.color = "red";
         }
 
-        onDecodingFinished: console.debug("done qrdecode")
+        //onDecodingFinished: console.debug("done qrdecode")
     }
 
     Camera{
@@ -62,19 +63,28 @@ Window {
         captureMode: Camera.CaptureStillImage//Camera.CaptureStillImage
 
         focus{
-            focusMode: Camera.FocusMacro //+ Camera.FocusContinuous
-            focusPointMode: Camera.FocusPointCenter
+            // Setting focusMode depending on a switch button
+            focusMode: focusSwitch.checked?Camera.FocusAuto:Camera.FocusManual //Camera.FocusMacro //+ Camera.FocusContinuous
+
+            focusPointMode: focusSwitch.checked?Camera.FocusPointCenter:Camera.FocusPointCustom //Camera.FocusPointCenter
+            // customFocusPoint is only used if FocusPointCustom (screen position) is given
+            customFocusPoint: focusControl.relativeposition // x,y between 0 and 1
             //focusZones:
         }
         exposure{
-            exposureMode: Camera.ExposureAuto
+            exposureMode: Camera.ExposurePortrait
+            // Adding exposure compesantion for the pictures (not working on my mac, only in android)
+            exposureCompensation: expoSlider.value;
         }
     }
+
     VideoOutput{
         //our viewfinder to show what the Camera sees
         id:viewfinder
         source:camera
         visible: !previewImage.visible
+        fillMode: VideoOutput.PreserveAspectFit
+        autoOrientation: true
 
         PinchArea{
             anchors.fill: parent
@@ -103,13 +113,14 @@ Window {
             left : parent.left
             right : overlay.left
         }
+
         ProgressBar{
             id:zoomIndicator
             visible: camera.maximumOpticalZoom * camera.maximumDigitalZoom >1
             anchors.fill: parent
-            value : camera.opticalZoom * camera.digitalZoom > 0 ? camera.opticalZoom * camera.digitalZoom : ""
-            minValue: 1
-            maxValue: camera.maximumOpticalZoom * camera.maximumDigitalZoom
+            value : camera.opticalZoom * camera.digitalZoom > 0 ? camera.opticalZoom * camera.digitalZoom : "" 
+            minimumValue: 1
+            maximumValue: camera.maximumOpticalZoom * camera.maximumDigitalZoom
         }
         Text{
             anchors.fill: parent
@@ -138,7 +149,8 @@ Window {
         fillMode: Image.PreserveAspectFit
         visible: false
         MouseArea{
-            anchors.fill: parent; onClicked:parent.visible = false
+            anchors.fill: parent;
+            onClicked:parent.visible = false
         }
     }
 
@@ -151,5 +163,82 @@ Window {
 
    }
 
+
+    // Exposure control!!
+    Column{
+        id: exposureControl
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        height: expoSlider.height+expoText.height
+
+        // Slider to select the under/over exposition value
+        Slider {
+            id: expoSlider
+            maximumValue: 3
+            minimumValue: -3
+            orientation: Qt.Vertical
+            stepSize: 0.5
+            height: mainWnd.height/3
+        }
+        Text{
+            id: expoText
+            text:expoSlider.value.toFixed(1)
+            anchors.top: expoSlider.bottom
+        }
+    }
+
+    // Focus selector
+    Column{
+        id: focusSettings
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+
+        Text{
+            id: focusMode
+            text: focusSwitch.checked?"Focus: Auto  ":"Focus: Manual"
+        }
+        Switch{
+            id: focusSwitch
+            checked: true
+        }
+    }
+
+    // Focus target
+    Image{
+
+
+        id: focusControl
+        visible: !focusSwitch.checked // in auto mode there is no focus marker
+
+        // Obtained from: http://www.flaticon.com/free-icon/square-target-interface-symbol_54048
+        source:"qrc:/camera_square.png"
+        width: 75
+        height: 75
+
+        // We create a property becaus point is required by the Focus property
+        property point relativeposition
+        // We convert the convert position of the image into the center, and normalize between 0 and 1
+        relativeposition: Qt.point((this.x+this.width/2.0)/viewfinder.width,
+                                   (this.y+this.height/2.0)/viewfinder.height)
+
+        // Verifing the values
+        onRelativepositionChanged: console.log('Focus Position'+relativeposition)
+
+        // Initial position
+        x: (viewfinder.width-this.width)/2
+        y: (viewfinder.height-this.height)/2
+
+
+        // Mouse area to allow the image to be dragable
+        MouseArea{
+                anchors.fill: parent
+                drag.target: focusControl
+                drag.axis: Drag.XAndYAxis
+                drag.minimumX: 0
+                drag.minimumY: 0
+                drag.maximumX: viewfinder.width-parent.width
+                drag.maximumY: viewfinder.height-parent.height
+        }
+    }
 
 }

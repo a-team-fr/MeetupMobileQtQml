@@ -6,5 +6,6 @@
         <file>camera_flash_auto.png</file>
         <file>camera_flash_off.png</file>
         <file>ProgressBar.qml</file>
+        <file>camera_square.png</file>
     </qresource>
 </RCC>
