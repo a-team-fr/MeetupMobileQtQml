@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>steel.jpeg</file>
+        <file>Clock.qml</file>
+        <file>mainAll.qml</file>
+        <file>mainClockCmp.qml</file>
+        <file>arrow.png</file>
+    </qresource>
+</RCC>
