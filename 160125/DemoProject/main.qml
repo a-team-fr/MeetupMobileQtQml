@@ -10,6 +10,10 @@ Window {
     width: 1024//Screen.desktopAvailableWidth
     height: 768//Screen.desktopAvailableHeight
 
+    MapboxCredentials{
+        id:mapboxCredentials
+    }
+
     PositionSource{
         id:myPos
         updateInterval: 1000
@@ -30,7 +34,7 @@ Window {
 
     PlaceSearchModel {
         id: searchModel
-        plugin: myPlugin
+        plugin: mapbox
         searchTerm: searchFieldName.text
         searchArea: QtPositioning.circle(myMap.center, Number(searchFieldRadius.text));
         Component.onCompleted: update()
@@ -46,13 +50,26 @@ Window {
 
     GeocodeModel{
         id:geocodeModel
-        plugin:myPlugin
+        plugin:mapbox
         autoUpdate:false
 
     }
 
     Plugin{
-        id:myPlugin
+        id:mapbox
+        name: "mapbox"
+        PluginParameter{
+            name:"mapbox.access_token"
+            value:"PLACE HERE YOUR ACCESS TOKEN"
+        }
+        PluginParameter{
+            name:"mapbox.map_id"
+            value:"<PLACE HERE YOUR MAP ID"
+        }
+    }
+
+    Plugin{
+        id:osm
         name: "osm"
     }
 
@@ -79,7 +96,7 @@ Window {
     Map{
         id:myMap
         anchors.fill : parent
-        plugin:myPlugin
+        plugin:mapbox
         center:useDeviceLocation.checked ? myPos.position.coordinate : QtPositioning.coordinate(47.212047, -1.551647)//myLocation.coordinate
         //maximumZoomLevel:
         zoomLevel: myMap.maximumZoomLevel
@@ -183,7 +200,7 @@ Window {
 
     RouteModel {
         id: routeModel
-        plugin:myPlugin
+        plugin:mapbox
         query: routeQuery
         onQueryChanged: Console.log(count)
         autoUpdate: false
