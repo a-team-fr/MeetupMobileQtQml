@@ -4,14 +4,16 @@
 #include "QZXing_global.h"
 #include <QObject>
 #include <QImage>
-#include <QtQuick/QQuickImageProvider>
-#include <QQmlContext>
 
 #if QT_VERSION >= 0x040700 && QT_VERSION < 0x050000
 #include <QtDeclarative>
 #elif QT_VERSION >= 0x050000
 #include <QtQml/qqml.h>
+#include <QQuickView>
+#include <QQmlEngine>
 #endif
+
+#include "QZXingImageProvider.h"
 
 // forward declaration
 namespace zxing {
@@ -29,10 +31,10 @@ class ImageHandler;
   * Regarding DecoderFormat, by default all of those are enabled (except DataMatrix will is still not supported)
   */
 class
-#ifndef DISABLE_LIBRARY_FEATURES
-    QZXINGSHARED_EXPORT
-#endif
-    QZXing : public QObject {
+        #ifndef DISABLE_LIBRARY_FEATURES
+        QZXINGSHARED_EXPORT
+        #endif
+        QZXing : public QObject {
 
     Q_OBJECT
     Q_ENUMS(DecoderFormat)
@@ -77,32 +79,21 @@ public:
     }
 #endif
 
-    QString decoderFormatToString(int fmt);
+#if  QT_VERSION >= 0x050000
+    static void registerQMLImageProvider(const QQuickView& view)
+    {
+        QQmlEngine *engine = view.engine();
+        engine->addImageProvider(QLatin1String("QZXing"), QZXingImageProvider::getInstance());
+    }
+#endif
+
+    void setTryHarder(bool tryHarder);
+    bool getTryHarder();
+    static QString decoderFormatToString(int fmt);
     QString foundedFormat() const;
     QString charSet() const;
 
 public slots:
-
-    void decodeQMLImage( const QUrl& imageUrl){
-
-        //imagePath : "image://camera/preview_5"
-        //QUrl imageUrl(imagePath);
-        QQmlEngine* engine = QQmlEngine::contextForObject(this)->engine();
-        QQmlImageProviderBase* imageProviderBase = engine->imageProvider(imageUrl.host());
-        QQuickImageProvider* imageProvider = static_cast<QQuickImageProvider*>(imageProviderBase);
-        if (!imageProvider) return;
-
-        QSize imageSize;
-        QString imageId = imageUrl.path().remove(0,1);
-        QImage image = imageProvider->requestImage(imageId, &imageSize, imageSize);
-
-        image.save("outputQR.png");
-        if( !image.isNull()) {
-            decodeImage(image, image.width(), image.height());
-        }
-
-    }
-
     /**
       * The decoding function. Will try to decode the given image based on the enabled decoders.
       * If the image width is larger than maxWidth or image height is larger
@@ -112,7 +103,7 @@ public slots:
       * The smoothTransformation flag determines whether the transformation will be smooth or fast.
       * Smooth transformation provides better results but fast transformation is...faster.
       */
-    QString decodeImage(QImage &image, int maxWidth = -1, int maxHeight = -1, bool smoothTransformation = false);
+    QString decodeImage(const QImage &image, int maxWidth = -1, int maxHeight = -1, bool smoothTransformation = false);
 
     /**
       * The decoding function. Will try to decode the given image based on the enabled decoders.
@@ -129,8 +120,8 @@ public slots:
      * of a portion of the image. (Suggested for Qt 4.x)
      */
     QString decodeSubImageQML(QObject *item,
-                              const double offsetX = 0 , const double offsetY = 0,
-                              const double width = 0, const double height = 0);
+                              const int offsetX = 0, const int offsetY = 0,
+                              const int width = 0, const int height = 0);
 
     /**
      * The decoding function accessible from QML. (Suggested for Qt 5.x)
@@ -147,8 +138,8 @@ public slots:
      * (Suggested for Qt 5.x)
      */
     QString decodeSubImageQML(const QUrl &imageUrl,
-                              const double offsetX = 0, const double offsetY = 0,
-                              const double width = 0, const double height = 0);
+                              const int offsetX = 0, const int offsetY = 0,
+                              const int width = 0, const int height = 0);
 
     /**
      * The main encoding function. Currently supports only Qr code encoding
@@ -177,9 +168,10 @@ public slots:
 signals:
     void decodingStarted();
     void decodingFinished(bool succeeded);
-    void tagFound(QString tag);
     void enabledFormatsChanged();
-    void tagFoundAdvanced(QString tag, QString format, QString charSet);
+    void tagFound(QString tag);
+    void tagFoundAdvanced(const QString &tag, const QString &format, const QString &charSet) const;
+    void tagFoundAdvanced(const QString &tag, const QString &format, const QString &charSet, const QRectF &rect) const;
     void error(QString msg);
 
 private:
@@ -189,6 +181,7 @@ private:
     int processingTime;
     QString foundedFmt;
     QString charSet_;
+    bool tryHarder_;
 
     /**
       * If true, the decoding operation will take place at a different thread.

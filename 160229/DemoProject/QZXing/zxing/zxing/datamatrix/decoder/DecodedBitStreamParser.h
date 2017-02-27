@@ -79,7 +79,7 @@ private:
   /**
    * See ISO 16022:2006, 5.2.9 and Annex B, B.2
    */
-  void decodeBase256Segment(Ref<BitSource> bits, std::ostringstream &result, std::vector<char> byteSegments);
+  void decodeBase256Segment(Ref<BitSource> bits, std::ostringstream &result, std::vector<byte> byteSegments);
 
   void parseTwoBytes(int firstByte, int secondByte, int* result);
   /**
@@ -89,13 +89,13 @@ private:
                            int base256CodewordPosition) {
     int pseudoRandomNumber = ((149 * base256CodewordPosition) % 255) + 1;
     int tempVariable = randomizedBase256Codeword - pseudoRandomNumber;
-    return (char) (tempVariable >= 0 ? tempVariable : (tempVariable + 256));
+    return (byte) (tempVariable >= 0 ? tempVariable : (tempVariable + 256));
   };
   void append(std::ostream &ost, const char *bufIn, size_t nIn, const char *src);
 
 public:
   DecodedBitStreamParser() { };
-  Ref<DecoderResult> decode(ArrayRef<char> bytes);
+  Ref<DecoderResult> decode(ArrayRef<byte> bytes);
 };
 
 }

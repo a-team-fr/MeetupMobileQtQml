@@ -218,7 +218,7 @@ void MatrixUtil::embedDataBits(const BitArray& dataBits, int maskPattern, ByteMa
     }
     // All bits should be consumed.
     if (bitIndex != dataBits.getSize()) {
-        throw new zxing::WriterException("Not all bits consumed: " + bitIndex + '/' + dataBits.getSize());
+        throw zxing::WriterException("Not all bits consumed: " + bitIndex + '/' + dataBits.getSize());
     }
 }
 
@@ -226,7 +226,7 @@ int MatrixUtil::findMSBSet(int value)
 {
     int numDigits = 0;
     while (value != 0) {
-        value >>= 1;
+        value = ((unsigned int)value) >> 1; //need to recheck, original operator >>>=1
         ++numDigits;
     }
     return numDigits;
@@ -252,7 +252,7 @@ int MatrixUtil::calculateBCHCode(int value, int poly)
 void MatrixUtil::makeTypeInfoBits(const ErrorCorrectionLevel& ecLevel, int maskPattern, BitArray& bits)
 {
     if (!QRCode::isValidMaskPattern(maskPattern)) {
-        throw new WriterException("Invalid mask pattern");
+        throw WriterException("Invalid mask pattern");
     }
     int typeInfo = (ecLevel.bits() << 3) | maskPattern;
     bits.appendBits(typeInfo, 5);
@@ -265,7 +265,7 @@ void MatrixUtil::makeTypeInfoBits(const ErrorCorrectionLevel& ecLevel, int maskP
     bits.xor_(maskBits);
 
     if (bits.getSize() != 15) {  // Just in case.
-        throw new WriterException("should not happen but we got: " + bits.getSize());
+        throw WriterException("should not happen but we got: " + bits.getSize());
     }
 }
 
@@ -278,7 +278,7 @@ void MatrixUtil::makeVersionInfoBits(const Version& version, BitArray& bits)
     bits.appendBits(bchCode, 12);
 
     if (bits.getSize() != 18) {  // Just in case.
-        throw new WriterException("should not happen but we got: " + bits.getSize());
+        throw WriterException("should not happen but we got: " + bits.getSize());
     }
 }
 
@@ -290,11 +290,11 @@ void MatrixUtil::embedTimingPatterns(ByteMatrix& matrix)
         int bit = (i + 1) % 2;
         // Horizontal line.
         if (isEmpty(matrix.get(i, 6))) {
-            matrix.set(i, 6, (char)bit);
+            matrix.set(i, 6, (byte)bit);
         }
         // Vertical line.
         if (isEmpty(matrix.get(6, i))) {
-            matrix.set(6, i, (char)bit);
+            matrix.set(6, i, (byte)bit);
         }
     }
 }
@@ -302,9 +302,9 @@ void MatrixUtil::embedTimingPatterns(ByteMatrix& matrix)
 void MatrixUtil::embedDarkDotAtLeftBottomCorner(ByteMatrix& matrix)
 {
     if (matrix.get(8, matrix.getHeight() - 8) == 0) {
-        throw new WriterException();
+        throw WriterException();
     }
-    matrix.set(8, matrix.getHeight() - 8, (char)1);
+    matrix.set(8, matrix.getHeight() - 8, (byte)1);
 }
 
 void MatrixUtil::embedHorizontalSeparationPattern(int xStart,
@@ -313,9 +313,9 @@ void MatrixUtil::embedHorizontalSeparationPattern(int xStart,
 {
     for (int x = 0; x < 8; ++x) {
         if (!isEmpty(matrix.get(xStart + x, yStart))) {
-            throw new WriterException();
+            throw WriterException();
         }
-        matrix.set(xStart + x, yStart, (char)0);
+        matrix.set(xStart + x, yStart, (byte)0);
     }
 }
 
@@ -325,9 +325,9 @@ void MatrixUtil::embedVerticalSeparationPattern(int xStart,
 {
     for (int y = 0; y < 7; ++y) {
         if (!isEmpty(matrix.get(xStart, yStart + y))) {
-            throw new WriterException();
+            throw WriterException();
         }
-        matrix.set(xStart, yStart + y, (char)0);
+        matrix.set(xStart, yStart + y, (byte)0);
     }
 }
 
@@ -335,7 +335,7 @@ void MatrixUtil::embedPositionAdjustmentPattern(int xStart, int yStart, ByteMatr
 {
     for (int y = 0; y < 5; ++y) {
         for (int x = 0; x < 5; ++x) {
-            matrix.set(xStart + x, yStart + y, (char)POSITION_ADJUSTMENT_PATTERN[y][x]);
+            matrix.set(xStart + x, yStart + y, (byte)POSITION_ADJUSTMENT_PATTERN[y][x]);
         }
     }
 }
@@ -344,7 +344,7 @@ void MatrixUtil::embedPositionDetectionPattern(int xStart, int yStart, ByteMatri
 {
     for (int y = 0; y < 7; ++y) {
         for (int x = 0; x < 7; ++x) {
-            matrix.set(xStart + x, yStart + y, (char)POSITION_DETECTION_PATTERN[y][x]);
+            matrix.set(xStart + x, yStart + y, (byte)POSITION_DETECTION_PATTERN[y][x]);
         }
     }
 }

@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Gizmo.qml</file>
+        <file>Arrow.qml</file>
+        <file>Ball.qml</file>
+        <file>SkyBox.qml</file>
+        <file>skybox/skybox_posy.jpg</file>
+        <file>skybox/skybox_negy.jpg</file>
+        <file>skybox/skybox_negx.jpg</file>
+        <file>skybox/skybox_posx.jpg</file>
+        <file>skybox/skybox_negz.jpg</file>
+        <file>skybox/skybox_posz.jpg</file>
+        <file>skybox/galaxy_starfield.png</file>
+        <file>skybox/starfield.obj</file>
+        <file>ControlPanel.qml</file>
+        <file>Support.qml</file>
+        <file>Stick.qml</file>
+        <file>TransformableEntity.qml</file>
+    </qresource>
+</RCC>

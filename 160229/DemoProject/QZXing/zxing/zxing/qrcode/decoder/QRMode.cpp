@@ -43,6 +43,14 @@ Mode Mode::FNC1_FIRST_POSITION(0, 0, 0, 0x05, "FNC1_FIRST_POSITION");
 Mode Mode::FNC1_SECOND_POSITION(0, 0, 0, 0x09, "FNC1_SECOND_POSITION");
 Mode Mode::HANZI(8, 10, 12, 0x0D, "HANZI");
 
+Mode::Mode() :
+    characterCountBitsForVersions0To9_(0),
+    characterCountBitsForVersions10To26_(0),
+    characterCountBitsForVersions27AndHigher_(0),
+    bits_(0),
+    name_("")
+{}
+
 Mode::Mode(int cbv0_9, int cbv10_26, int cbv27, int bits, char const* name) :
     characterCountBitsForVersions0To9_(cbv0_9), characterCountBitsForVersions10To26_(cbv10_26),
     characterCountBitsForVersions27AndHigher_(cbv27), bits_(bits), name_(name)
@@ -106,5 +114,10 @@ bool Mode::operator==(const Mode& other)
             && characterCountBitsForVersions10To26_ == other.characterCountBitsForVersions10To26_
             && characterCountBitsForVersions27AndHigher_ == other.characterCountBitsForVersions27AndHigher_
             && name_ == other.name_
-            && bits_ == other.bits_ );
+             && bits_ == other.bits_ );
+}
+
+bool Mode::operator!=(const zxing::qrcode::Mode &other)
+{
+    return !(operator==(other));
 }

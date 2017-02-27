@@ -18,6 +18,7 @@
 #include <zxing/common/BitArray.h>
 #include <zxing/common/Array.h>
 #include <cstring>
+#include <sstream>
 
 using std::vector;
 using zxing::BitArray;
@@ -26,8 +27,11 @@ using zxing::BitArray;
 // VC++
 using zxing::Ref;
 
+
+namespace zxing {
+
 int BitArray::makeArraySize(int size) {
-    return (size + bitsPerWord-1) >> logBits;
+    return (size + 31) / 32;
 }
 
 BitArray::BitArray(): size(0), bits(1) {}
@@ -39,11 +43,16 @@ BitArray::~BitArray() {
 }
 
 int BitArray::getSize() const {
-    return bits->size();
+    return size;
+}
+
+int BitArray::getSizeInBytes() const
+{
+    return (size + 7)/8;
 }
 
 void BitArray::setBulk(int i, int newBits) {
-    bits[i >> logBits] = newBits;
+    bits[i / 32] = newBits;
 }
 
 void BitArray::clear() {
@@ -61,13 +70,13 @@ bool BitArray::isRange(int start, int end, bool value) {
         return true; // empty range matches
     }
     end--; // will be easier to treat this as the last actually set bit -- inclusive
-    int firstInt = start >> logBits;
-    int lastInt = end >> logBits;
+    int firstInt = start / 32;
+    int lastInt = end / 32;
     for (int i = firstInt; i <= lastInt; i++) {
-        int firstBit = i > firstInt ? 0 : start & bitsMask;
-        int lastBit = i < lastInt ? (bitsPerWord-1) : end & bitsMask;
+        int firstBit = i > firstInt ? 0 : start & 0x1F;
+        int lastBit = i < lastInt ? 31 : end & 0x1F;
         int mask;
-        if (firstBit == 0 && lastBit == (bitsPerWord-1)) {
+        if (firstBit == 0 && lastBit == 31) {
             mask = -1;
         } else {
             mask = 0;
@@ -89,13 +98,36 @@ vector<int>& BitArray::getBitArray() {
     return bits->values();
 }
 
-void BitArray::reverse() {
+void BitArray::reverse()
+{
     ArrayRef<int> newBits(bits->size());
-    int size = this->size;
-    for (int i = 0; i < size; i++) {
-        if (get(size - i - 1)) {
-            newBits[i >> logBits] |= 1 << (i & bitsMask);
-        }
+    // reverse all int's first
+    int len = ((this->size-1) / 32);
+    int oldBitsLen = len + 1;
+    for (int i = 0; i < oldBitsLen; i++) {
+      long x = (long) bits[i];
+      x = ((x >>  1) & 0x55555555L) | ((x & 0x55555555L) <<  1);
+      x = ((x >>  2) & 0x33333333L) | ((x & 0x33333333L) <<  2);
+      x = ((x >>  4) & 0x0f0f0f0fL) | ((x & 0x0f0f0f0fL) <<  4);
+      x = ((x >>  8) & 0x00ff00ffL) | ((x & 0x00ff00ffL) <<  8);
+      x = ((x >> 16) & 0x0000ffffL) | ((x & 0x0000ffffL) << 16);
+      newBits[len - i] = (int) x;
+    }
+    // now correct the int's if the bit size isn't a multiple of 32
+    if (size != oldBitsLen * 32) {
+      int leftOffset = oldBitsLen * 32 - size;
+      int mask = 1;
+      for (int i = 0; i < 31 - leftOffset; i++) {
+        mask = (mask << 1) | 1;
+      }
+      int currentInt = (newBits[0] >> leftOffset) & mask;
+      for (int i = 1; i < oldBitsLen; i++) {
+        int nextInt = newBits[i];
+        currentInt |= nextInt << (32 - leftOffset);
+        newBits[i - 1] = currentInt;
+        currentInt = (nextInt >> leftOffset) & mask;
+      }
+      newBits[oldBitsLen - 1] = currentInt;
     }
     bits = newBits;
 }
@@ -214,7 +246,7 @@ void BitArray::xor_(const BitArray& other)
     }
 }
 
-void BitArray::toBytes(int bitOffset, std::vector<char>& array, int offset, int numBytes) const
+void BitArray::toBytes(int bitOffset, std::vector<byte>& array, int offset, int numBytes) const
 {
     if(array.size() < (numBytes + offset))
         array.resize(numBytes + offset);
@@ -227,6 +259,24 @@ void BitArray::toBytes(int bitOffset, std::vector<char>& array, int offset, int 
             }
             bitOffset++;
         }
-        array[offset + i] = (char) theByte;
+        array[offset + i] = (byte) theByte;
     }
+}
+
+const std::string BitArray::toString() const
+{
+    std::stringstream result;// = new StringBuilder(2 * width * height + 2);
+
+    for (size_t i = 0; i < size; i++) {
+      if ((i & 0x07) == 0) {
+        result << ' ';
+      }
+      result << (get(i) ? 'X' : '.');
+    }
+
+    return result.str();
+
+
+}
+
 }

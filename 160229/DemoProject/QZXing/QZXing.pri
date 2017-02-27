@@ -132,9 +132,12 @@ HEADERS += $$PWD/QZXing_global.h \
     $$PWD/zxing/zxing/WriterException.h \
     $$PWD/zxing/zxing/EncodeHint.h \
     $$PWD/zxing/zxing/UnsupportedEncodingException.h \
-    $$PWD/zxing/zxing/common/reedsolomon/ReedSolomonEncoder.h
+    $$PWD/zxing/zxing/common/reedsolomon/ReedSolomonEncoder.h \
+    $$PWD/zxing/zxing/common/Types.h \
+    $$PWD/QZXingImageProvider.h
 
 SOURCES += $$PWD/CameraImageWrapper.cpp \
+    $$PWD/QZXingImageProvider.cpp\
     $$PWD/qzxing.cpp \
     $$PWD/imagehandler.cpp \
     $$PWD/zxing/zxing/ResultIO.cpp \
@@ -258,15 +261,30 @@ symbian {
         Location
 }
 
-unix:!symbian {
-    maemo5 {
-        target.path = /opt/usr/lib
-    } else {
-        target.path = /usr/lib
+!symbian {
+    isEmpty(PREFIX) {
+        maemo5 {
+            target.path = /opt/usr/lib
+        } else {
+            target.path = /usr/lib
+        }
     }
 
     DEFINES += NOFMAXL
-    INSTALLS += target
+
+	# Installation
+	headers.files = qzxing.h QZXing_global.h
+	headers.path = $$PREFIX/include
+	target.path = $$PREFIX/lib
+	INSTALLS += headers target
+
+	# pkg-config support
+	CONFIG += create_pc create_prl no_install_prl
+	QMAKE_PKGCONFIG_DESTDIR = pkgconfig
+	QMAKE_PKGCONFIG_LIBDIR = ${prefix}/lib
+	QMAKE_PKGCONFIG_INCDIR = ${prefix}/include
+
+	unix:QMAKE_CLEAN += -r pkgconfig lib$${TARGET}.prl
 }
 
 win32-msvc*{
@@ -289,5 +307,8 @@ win32-g++{
 }
 
 !win32{
+    DEFINES += NO_ICONV
+}
+winrt {
     DEFINES += NO_ICONV
 }

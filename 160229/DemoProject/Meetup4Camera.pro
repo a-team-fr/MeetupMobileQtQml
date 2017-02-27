@@ -7,6 +7,10 @@ SOURCES += main.cpp \
     cameracontroler.cpp
 
 RESOURCES += qml.qrc
+macx {
+    QMAKE_MAC_SDK = macosx10.12
+}
+
 
 include(QZXing/QZXing.pri)
 
@@ -15,6 +19,7 @@ QML_IMPORT_PATH =
 
 # Default rules for deployment.
 include(deployment.pri)
+
 
 HEADERS += \
     cameracontroler.h

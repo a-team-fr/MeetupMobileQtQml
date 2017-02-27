@@ -44,14 +44,19 @@ public:
     BitArray(int size);
     ~BitArray();
     int getSize() const;
+    int getSizeInBytes() const;
 
     bool get(int i) const {
-        return (bits[i >> logBits] & (1 << (i & bitsMask))) != 0;
+        return (bits[i / 32] & (1 << (i & 0x1F))) != 0;
     }
 
     void set(int i) {
-        bits[i >> logBits] |= 1 << (i & bitsMask);
+        bits[i / 32] |= 1 << (i & 0x1F);
     }
+
+    void flip(int i) {
+        bits[i / 32] ^= 1 << (i & 0x1F);
+      }
 
     int getNextSet(int from);
     int getNextUnset(int from);
@@ -69,7 +74,9 @@ public:
 
     void xor_(const BitArray& other);
 
-    void toBytes(int bitOffset, std::vector<char>& array, int offset, int numBytes) const;
+    void toBytes(int bitOffset, std::vector<byte>& array, int offset, int numBytes) const;
+
+    const std::string toString() const;
 
     static ArrayRef<int> makeArray(int size) {
         return ArrayRef<int>((size + 31) / 32);

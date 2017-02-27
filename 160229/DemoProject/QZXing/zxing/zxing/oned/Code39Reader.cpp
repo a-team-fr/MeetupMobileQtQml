@@ -23,6 +23,7 @@
 #include <zxing/ChecksumException.h>
 #include <math.h>
 #include <limits.h>
+#include <algorithm>
 
 using std::vector;
 using zxing::Ref;
@@ -170,7 +171,7 @@ Ref<Result> Code39Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
     Ref<OneDResultPoint>(new OneDResultPoint(right, (float) rowNumber));
   
   return Ref<Result>(
-    new Result(resultString, ArrayRef<char>(), resultPoints, BarcodeFormat::CODE_39)
+    new Result(resultString, ArrayRef<byte>(), resultPoints, BarcodeFormat::CODE_39)
     );
 }
 
@@ -282,7 +283,7 @@ Ref<String> Code39Reader::decodeExtended(std::string encoded){
       case '+':
         // +A to +Z map to a to z
         if (next >= 'A' && next <= 'Z') {
-          decodedChar = (char) (next + 32);
+          decodedChar = (byte) (next + 32);
         } else {
           throw ReaderException("");
         }
@@ -290,7 +291,7 @@ Ref<String> Code39Reader::decodeExtended(std::string encoded){
       case '$':
         // $A to $Z map to control codes SH to SB
         if (next >= 'A' && next <= 'Z') {
-          decodedChar = (char) (next - 64);
+          decodedChar = (byte) (next - 64);
         } else {
           throw ReaderException("");
         }
@@ -298,9 +299,9 @@ Ref<String> Code39Reader::decodeExtended(std::string encoded){
       case '%':
         // %A to %E map to control codes ESC to US
         if (next >= 'A' && next <= 'E') {
-          decodedChar = (char) (next - 38);
+          decodedChar = (byte) (next - 38);
         } else if (next >= 'F' && next <= 'W') {
-          decodedChar = (char) (next - 11);
+          decodedChar = (byte) (next - 11);
         } else {
           throw ReaderException("");
         }
@@ -308,7 +309,7 @@ Ref<String> Code39Reader::decodeExtended(std::string encoded){
       case '/':
         // /A to /O map to ! to , and /Z maps to :
         if (next >= 'A' && next <= 'O') {
-          decodedChar = (char) (next - 32);
+          decodedChar = (byte) (next - 32);
         } else if (next == 'Z') {
           decodedChar = ':';
         } else {

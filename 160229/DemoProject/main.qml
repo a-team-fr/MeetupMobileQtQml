@@ -1,7 +1,7 @@
 import QtQuick 2.3
 import QtQuick.Window 2.2
 import QtMultimedia 5.5
-import QtQuick.Controls 1.4
+import QtQuick.Controls 2.0
 import Qt.labs.settings 1.0
 
 Window {
@@ -60,8 +60,10 @@ Window {
             onImageSaved: console.log("picture saved to :"+path)
         }
 
-        captureMode: Camera.CaptureStillImage//Camera.CaptureStillImage
+        captureMode: Camera.CaptureStillImage
 
+        focus.focusMode: Camera.FocusMacro
+        /*
         focus{
             // Setting focusMode depending on a switch button
             focusMode: focusSwitch.checked?Camera.FocusAuto:Camera.FocusManual //Camera.FocusMacro //+ Camera.FocusContinuous
@@ -71,8 +73,9 @@ Window {
             customFocusPoint: focusControl.relativeposition // x,y between 0 and 1
             //focusZones:
         }
+        */
         exposure{
-            exposureMode: Camera.ExposurePortrait
+            exposureMode: Camera.ExposureAuto
             // Adding exposure compesantion for the pictures (not working on my mac, only in android)
             exposureCompensation: expoSlider.value;
         }
@@ -119,8 +122,8 @@ Window {
             visible: camera.maximumOpticalZoom * camera.maximumDigitalZoom >1
             anchors.fill: parent
             value : camera.opticalZoom * camera.digitalZoom > 0 ? camera.opticalZoom * camera.digitalZoom : "" 
-            minimumValue: 1
-            maximumValue: camera.maximumOpticalZoom * camera.maximumDigitalZoom
+            from: 1
+            to: camera.maximumOpticalZoom * camera.maximumDigitalZoom
         }
         Text{
             anchors.fill: parent
@@ -174,8 +177,8 @@ Window {
         // Slider to select the under/over exposition value
         Slider {
             id: expoSlider
-            maximumValue: 3
-            minimumValue: -3
+            to: 3
+            from: -3
             orientation: Qt.Vertical
             stepSize: 0.5
             height: mainWnd.height/3

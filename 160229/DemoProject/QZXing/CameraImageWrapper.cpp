@@ -3,129 +3,176 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-CameraImageWrapper::CameraImageWrapper() : LuminanceSource(0,0)
+CameraImageWrapper::CameraImageWrapper() : LuminanceSource(0,0), image(NULL)
 {
 }
 
 CameraImageWrapper::CameraImageWrapper(const QImage &sourceImage) : LuminanceSource(sourceImage.width(), sourceImage.height())
 {
-    image = sourceImage.copy();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
+    image = grayScaleImage( &sourceImage );
+#else
+    image = new QImage(sourceImage);
+#endif
+    delegate = Ref<GreyscaleLuminanceSource>(
+                new GreyscaleLuminanceSource(getMatrixP(),image->width(), image->height(),0, 0, image->width(), image->height()));
 }
 
 CameraImageWrapper::CameraImageWrapper(CameraImageWrapper& otherInstance) : LuminanceSource(otherInstance.getWidth(), otherInstance.getHeight())
 {
-    image = otherInstance.getOriginalImage().copy();
+    image = new QImage(otherInstance.getOriginalImage());
+    delegate = otherInstance.getDelegate();
 }
 
 CameraImageWrapper::~CameraImageWrapper()
 {
+    if(image)
+        delete image;
 }
 
 CameraImageWrapper *CameraImageWrapper::Factory(const QImage &sourceImage, int maxWidth, int maxHeight, bool smoothTransformation)
 {
-    QImage image;
-    if((maxWidth != 1 || maxHeight != 1) && (sourceImage.width() > maxWidth || sourceImage.height() > maxHeight))
+    if((maxWidth != 1 && sourceImage.width() > maxWidth) || (maxHeight != 1 && sourceImage.height() > maxHeight))
+    {
+        QImage image;
         image = sourceImage.scaled(
                     maxWidth != -1 ? maxWidth : sourceImage.width(),
                     maxHeight != -1 ? maxHeight : sourceImage.height(),
                     Qt::KeepAspectRatio,
                     smoothTransformation ? Qt::SmoothTransformation : Qt::FastTransformation);
-    else
-        image = sourceImage;
-
-    return new CameraImageWrapper(image);
-}
-
-int CameraImageWrapper::getWidth() const
-{
-    return image.width();
-}
-
-int CameraImageWrapper::getHeight() const
-{
-    return image.height();
-}
-
-unsigned char CameraImageWrapper::getPixel(int x, int y) const
-{
-    QRgb pixel = image.pixel(x,y);
-
-    return qGray(pixel);//((qRed(pixel) + qGreen(pixel) + qBlue(pixel)) / 3);
-}
-
-unsigned char* CameraImageWrapper::copyMatrix() const
-{
-    unsigned char* newMatrix = (unsigned char*)malloc(image.width()*image.height()*sizeof(unsigned char));
-
-    int cnt = 0;
-    for(int i=0; i<image.width(); i++)
-    {
-        for(int j=0; j<image.height(); j++)
-        {
-            newMatrix[cnt++] = getPixel(i,j);
-        }
+        return new CameraImageWrapper(image);
     }
-
-    return newMatrix;
+    else
+        return new CameraImageWrapper(sourceImage);
 }
 
-QImage CameraImageWrapper::grayScaleImage(QImage::Format f)
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
+QImage* CameraImageWrapper::grayScaleImage(const QImage *origin)
 {
-    QImage tmp(image.width(), image.height(), f);
-    for(int i=0; i<image.width(); i++)
+    QImage *tmp = new QImage(origin->width(), origin->height(), QImage::Format_Grayscale8);
+    for(int i=0; i<origin->width(); i++)
     {
-        for(int j=0; j<image.height(); j++)
+        for(int j=0; j<origin->height(); j++)
         {
-            int pix = (int)getPixel(i,j);
-            tmp.setPixel(i,j, qRgb(pix ,pix,pix));
+            QRgb pixel = origin->pixel(QPoint(i,j));
+            QRgb pix = gray(qRed(pixel),qGreen(pixel),qBlue(pixel));
+                    //gray(origin->pixel(QPoint(i,j)));
+            tmp->setPixel(i,j, qRgb(pix ,pix,pix));
         }
     }
 
     return tmp;
 }
-
+#endif
 QImage CameraImageWrapper::getOriginalImage()
 {
-    return image;
+    return *image;
 }
 
-ArrayRef<char> CameraImageWrapper::getRow(int y, ArrayRef<char> row) const
+ArrayRef<byte> CameraImageWrapper::getRow(int y, ArrayRef<byte> row) const
+{
+    if(delegate)
+        return delegate->getRow(y, row);
+    else
+        return getRowP(y, row);
+}
+
+ArrayRef<byte> CameraImageWrapper::getMatrix() const
+{
+    if(delegate)
+        return delegate->getMatrix();
+    else
+        return getMatrixP();
+}
+
+bool CameraImageWrapper::isCropSupported() const
+{
+    if(delegate)
+        return delegate->isCropSupported();
+    else
+        return LuminanceSource::isCropSupported();
+}
+
+Ref<LuminanceSource> CameraImageWrapper::crop(int left, int top, int width, int height) const
+{
+    if(delegate)
+        return delegate->crop(left, top, width, height);
+    else
+        return LuminanceSource::crop(left, top, width, height);
+}
+
+bool CameraImageWrapper::isRotateSupported() const
+{
+    if(delegate)
+        return delegate->isRotateSupported();
+    else
+        return LuminanceSource::isRotateSupported();
+}
+
+Ref<LuminanceSource> CameraImageWrapper::invert() const
+{
+    if(delegate)
+        return delegate->invert();
+    else
+        return LuminanceSource::invert();
+}
+
+Ref<LuminanceSource> CameraImageWrapper::rotateCounterClockwise() const
+{
+    if(delegate)
+        return delegate->rotateCounterClockwise();
+    else
+        return LuminanceSource::rotateCounterClockwise();
+}
+
+ArrayRef<byte> CameraImageWrapper::getRowP(int y, ArrayRef<byte> row) const
 {
     int width = getWidth();
 
     if (row->size() != width)
-        row.reset(ArrayRef<char>(width));
+        row.reset(ArrayRef<byte>(width));
 
     for (int x = 0; x < width; x++)
-        row[x] = getPixel(x,y);
-
+    {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
+        row[x] = image->pixel(x,y);
+#else
+        QRgb pixel = image->pixel(x,y);
+        row[x] = qGray(pixel);
+#endif
+    }
     return row;
 }
 
-ArrayRef<char> CameraImageWrapper::getMatrix() const
+ArrayRef<byte> CameraImageWrapper::getMatrixP() const
 {
     int width = getWidth();
     int height =  getHeight();
-    char* matrix = new char[width*height];
-    char* m = matrix;
+
+    ArrayRef<byte> tmpRow(0);
+    ArrayRef<byte> arr(width*height);
+
+    byte* m = &arr[0];
 
     for(int y=0; y<height; y++)
     {
-        ArrayRef<char> tmpRow;
-        tmpRow = getRow(y, ArrayRef<char>(width));
+        tmpRow = getRowP(y, tmpRow);
 #if __cplusplus > 199711L
         memcpy(m, tmpRow->values().data(), width);
 #else
-		memcpy(m, &tmpRow->values()[0], width);
+        memcpy(m, &tmpRow[0], width);
 #endif
-        m += width * sizeof(unsigned char);
-    }
-
-	ArrayRef<char> arr = ArrayRef<char>(matrix, width*height);
-
-    if (matrix) {
-        delete matrix;
+        m += width * sizeof(byte);
     }
 
     return arr;
+}
+
+unsigned int CameraImageWrapper::gray(unsigned int r, unsigned int g, unsigned int b)
+{
+    //values based on http://entropymine.com/imageworsener/grayscale/
+    return (306 * (r & 0xFF) +
+           601 * (g & 0xFF) +
+           117 * (b & 0xFF) +
+           0x200) >> 10;
 }

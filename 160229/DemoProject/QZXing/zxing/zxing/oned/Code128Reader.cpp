@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 #include <sstream>
+#include <algorithm>
 
 using std::vector;
 using std::string;
@@ -270,7 +271,7 @@ Ref<Result> Code128Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
   bool isNextShifted = false;
 
   string result;
-  vector<char> rawCodes(20, 0);
+  vector<byte> rawCodes(20, 0);
 
   int lastStart = startPatternInfo[0];
   int nextStart = startPatternInfo[1];
@@ -323,9 +324,9 @@ Ref<Result> Code128Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
 
       case CODE_CODE_A:
         if (code < 64) {
-          result.append(1, (char) (' ' + code));
+          result.append(1, (byte) (' ' + code));
         } else if (code < 96) {
-          result.append(1, (char) (code - 64));
+          result.append(1, (byte) (code - 64));
         } else {
           // Don't let CODE_STOP, which always appears, affect whether whether we think the
           // last code was printable or not.
@@ -341,7 +342,7 @@ Ref<Result> Code128Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
                   result.append("]C1");
                 } else {
                   // GS1 specification 5.4.7.5. Every subsequent FNC1 is returned as ASCII 29 (GS)
-                  result.append(1, (char) 29);
+                  result.append(1, (byte) 29);
                 }
               }
               break;
@@ -368,7 +369,7 @@ Ref<Result> Code128Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
         break;
       case CODE_CODE_B:
         if (code < 96) {
-          result.append(1, (char) (' ' + code));
+          result.append(1, (byte) (' ' + code));
         } else {
           if (code != CODE_STOP) {
             lastCharacterWasPrintable = false;
@@ -474,7 +475,7 @@ Ref<Result> Code128Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
   float right = lastStart + lastPatternSize / 2.0f;
 
   int rawCodesSize = rawCodes.size();
-  ArrayRef<char> rawBytes (rawCodesSize);
+  ArrayRef<byte> rawBytes (rawCodesSize);
   for (int i = 0; i < rawCodesSize; i++) {
     rawBytes[i] = rawCodes[i];
   }
