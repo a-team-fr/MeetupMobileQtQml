@@ -80,11 +80,12 @@ ApplicationWindow {
         height: parent.height * 0.6
         modal:true
         title: "list of selected modules"
-
+        clip:true
         ListView{
             model:availableModules
 
             anchors.fill:parent
+            anchors.margins: 10
             delegate: Row{
                 CheckBox{
                     id:isSelected

@@ -1,12 +1,35 @@
 import QtQuick 2.6
 import QtQuick.Controls 2.1
+import QtLocation 5.6
+import QtPositioning 5.3
 
 Page {
-    Slider{
-        from:0
-        to:100
-        onPositionChanged: proxy.dperc_ThrottlePos = position * 100.
-        snapMode: Slider.SnapAlways
+
+    Plugin{
+        id:googlemaps
+        name:"googlemaps"
     }
+
+    Map{
+        id:myMap
+        anchors.fill:parent
+        plugin:googlemaps
+        center:carSymbol.coordinate//QtPositioning.coordinate(47.212047, -1.551647)
+        zoomLevel: myMap.maximumZoomLevel
+
+        MapQuickItem {
+            id:carSymbol
+            coordinate: QtPositioning.coordinate(proxy.latitude, proxy.longitude)
+            sourceItem:  Image{
+                source: "qrc:/img/carTop.png"
+                rotation: proxy.heading
+                transformOrigin: Item.Bottom
+            }
+        }
+
+
+    }
+
+
 
 }

@@ -8,5 +8,7 @@
         <file>module/instruments.qml</file>
         <file>module/visual.qml</file>
         <file>img/wheel.png</file>
+        <file>res/engine-loop.wav</file>
+        <file>img/carTop.png</file>
     </qresource>
 </RCC>
