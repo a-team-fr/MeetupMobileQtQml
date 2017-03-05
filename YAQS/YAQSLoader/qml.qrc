@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>module/systems.qml</file>
+        <file>module/io.qml</file>
+        <file>module/navigation.qml</file>
+        <file>module/sound.qml</file>
+        <file>module/instruments.qml</file>
+        <file>module/visual.qml</file>
+        <file>img/wheel.png</file>
+    </qresource>
+</RCC>
