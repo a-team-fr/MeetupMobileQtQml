@@ -10,5 +10,6 @@
         <file>img/wheel.png</file>
         <file>res/engine-loop.wav</file>
         <file>img/carTop.png</file>
+        <file>res/break.wav</file>
     </qresource>
 </RCC>

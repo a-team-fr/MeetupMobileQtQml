@@ -10,6 +10,7 @@ ApplicationWindow {
     title: qsTr("YAQS")
 
 
+
     header:ToolBar{
         RowLayout {
             anchors.fill: parent
@@ -86,6 +87,9 @@ ApplicationWindow {
 
             anchors.fill:parent
             anchors.margins: 10
+
+            ScrollBar.vertical: ScrollBar {}
+
             delegate: Row{
                 CheckBox{
                     id:isSelected

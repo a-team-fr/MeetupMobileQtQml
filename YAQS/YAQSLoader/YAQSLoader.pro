@@ -4,7 +4,8 @@ QT += qml quick multimedia location
 CONFIG += c++11
 
 SOURCES += main.cpp \
-    yaqsproxy.cpp
+    yaqsproxy.cpp \
+    yaqscontrols.cpp
 
 RESOURCES += qml.qrc
 
@@ -31,4 +32,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    yaqsproxy.h
+    yaqsproxy.h \
+    yaqscontrols.h
