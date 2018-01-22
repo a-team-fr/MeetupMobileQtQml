@@ -7,7 +7,8 @@ Page {
 
     Plugin{
         id:googlemaps
-        name:"googlemaps"
+        name:"osm"
+        // googlemaps requires an special plugin "googlemaps"
     }
 
     Map{
